@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>南京大学生创业政策智能咨询助手</title>
+<meta name="description" content="基于南京市大学生创业政策知识库的智能咨询系统">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:900px;margin:auto;min-height:100vh;padding:28px 16px}.head{background:#fff;border-radius:18px;padding:25px;box-shadow:0 8px 30px #0000000d}
+h1{font-size:25px;margin:0 0 8px}.sub{color:#687386;font-size:14px}.chat{margin-top:16px;background:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 30px #0000000d}
+.msgs{height:55vh;min-height:400px;overflow:auto;padding:5px}.row{display:flex;margin:12px 0}.row.user{justify-content:flex-end}.bubble{max-width:78%;padding:12px 14px;border-radius:14px;line-height:1.65;white-space:pre-wrap;font-size:14px}.assistant .bubble{background:#f0f3f8}.user .bubble{background:#315efb;color:#fff}
+.empty{text-align:center;color:#929baa;padding-top:120px;line-height:2}.bar{display:flex;gap:10px;margin-top:12px}.bar input{flex:1}.bar input,.bar button{border-radius:10px;padding:12px;border:1px solid #d9dee8;font-size:14px}.bar button{background:#315efb;color:#fff;border:0;padding:0 20px;cursor:pointer}.bar button:disabled{opacity:.5}.tip{text-align:center;color:#9aa3b2;font-size:12px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="head"><h1>南京大学生创业政策智能咨询助手</h1><div class="sub">基于南京市大学生创业政策知识库的智能咨询系统</div></header>
+<section class="chat">
+<div id="msgs" class="msgs"><div id="empty" class="empty">请输入你的问题<br>例如：C类人才申请购房补贴最高多少钱？</div></div>
+<div class="bar"><input id="q" placeholder="请输入政策问题…" autocomplete="off"><button id="send">发送</button></div>
+<div class="tip">回答基于南京大学生创业政策知识库</div>
+</section>
+</div>
+<script>
+let conversation_id="";
+const q=document.querySelector("#q"),send=document.querySelector("#send"),msgs=document.querySelector("#msgs");
+function add(role,text){document.querySelector("#empty")?.remove();const r=document.createElement("div");r.className="row "+role;const b=document.createElement("div");b.className="bubble";b.textContent=text;r.appendChild(b);msgs.appendChild(r);msgs.scrollTop=msgs.scrollHeight;return b}
+async function ask(){
+ const text=q.value.trim();if(!text)return;
+ add("user",text);q.value="";send.disabled=true;const b=add("assistant","正在查询政策知识库…");
+ try{
+  const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:text,conversation_id})});
+  const data=await res.json();
+  if(!res.ok) throw new Error(data.error||"请求失败");
+  b.textContent=data.answer||"没有获得有效回答。";
+  conversation_id=data.conversation_id||conversation_id;
+ }catch(e){b.textContent="请求失败："+e.message}
+ finally{send.disabled=false;q.focus()}
+}
+send.onclick=ask;q.addEventListener("keydown",e=>{if(e.key==="Enter")ask()});
+</script>
+</body>
+</html>
